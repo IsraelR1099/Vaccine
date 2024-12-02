@@ -3,6 +3,32 @@ import argparse
 import requests
 
 
+
+def check_response(file, response, payload):
+    sensitive_keywords = [
+            "information_schema",
+            "table_schema",
+            "table_name",
+            "column_name",
+            "database()",
+            "user()",
+            "version()",
+            ]
+    found_data = []
+    for keyword in sensitive_keywords:
+        if keyword.lower() in response.text.lower():
+            found_data.append(keyword)
+
+    if found_data:
+        print(f"[!] Found data: {', '.join(found_data)}")
+        with open(file, "a") as f:
+            f.write(f"[+] Sensitive data found with payload: {payload}\n")
+            for data in found_data:
+                f.write(f"   - {data}\n")
+        print(f"[!] Sesnsitive data found with payload: {payload}")
+        print(f"   - {', '.join(found_data)}")
+
+
 def sensitive(response, payload):
     """
     Analyze the response to determine if the SQLi was successful.

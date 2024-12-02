@@ -1,14 +1,18 @@
 import sys
 import argparse
 import requests
+from bs4 import BeautifulSoup
+from urllib.parse import urljoin
 
+session = requests.Session()
+session.headers["User-Agent"] = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
 
 def make_request(http_method, url, payload):
     try:
         if http_method == "GET":
-            response = requests.get(url + payload)
+            response = requests.get(url, params=payload)
         elif http_method == "POST":
-            response = requests.post(url, data=payload)
+            response = requests.post(url, params=payload)
         else:
             print("Invalid HTTP method.")
             sys.exit(1)
@@ -18,8 +22,7 @@ def make_request(http_method, url, payload):
     return response
 
 
-def detect_success(http_method, url, payload):
-    response = make_request(http_method, url, payload)
+def vulnerable(response):
     error_msgs = [
         "SQL syntax",
         "Warning",
@@ -32,57 +35,68 @@ def detect_success(http_method, url, payload):
         "unterminated string constant",
         "syntax error",
         ]
+    print(f"testing response {response.content}")
     for error_msg in error_msgs:
-        if error_msg.lower() in response.text.lower():
+        if error_msg in response.content.decode().lower():
             return True
     return False
 
 
-def check_response(file, response, payload):
-    sensitive_keywords = [
-            "information_schema",
-            "table_schema",
-            "table_name",
-            "column_name",
-            "database()",
-            "user()",
-            "version()",
-            ]
-    found_data = []
-    for keyword in sensitive_keywords:
-        if keyword.lower() in response.text.lower():
-            found_data.append(keyword)
-
-    if found_data:
-        print(f"[!] Found data: {', '.join(found_data)}")
-        with open(file, "a") as f:
-            f.write(f"[+] Sensitive data found with payload: {payload}\n")
-            for data in found_data:
-                f.write(f"   - {data}\n")
-        print(f"[!] Sesnsitive data found with payload: {payload}")
-        print(f"   - {', '.join(found_data)}")
+def get_forms(url):
+    soup = BeautifulSoup(session.get(url).content, "html.parser")
+    return soup.find_all("form")
 
 
-def analyze_vulnerability(file, http_method, url):
-    print("[+] Analyzing vulnerability")
-    error_based = "error_based_payload.txt"
-    with open(error_based, "r") as f:
-        for line in f:
-            payload = line.strip()
-            response = make_request(http_method, url, payload)
-            check_response(file, response, payload)
+def form_details(form):
+    details = {}
+    action = form.attrs.get("action")
+    method = form.attrs.get("method", "get")
+    inputs = []
+
+    for input_tag in form.find_all("input"):
+        input_type = input_tag.attrs.get("type", "text")
+        input_name = input_tag.attrs.get("name")
+        input_value = input_tag.attrs.get("value", "")
+        inputs.append({
+            "type": input_type,
+            "name": input_name,
+            "value": input_value,
+        })
+    details['action'] = action
+    details['method'] = method
+    details['inputs'] = inputs
+    return details
 
 
 def scan_url(file, http_method, url):
-    error_payloads = "sqli_payload.txt"
+    error_payloads = "syntax.txt"
+    forms = get_forms(url)
     with open(error_payloads, "r") as f:
-        for line in f:
-            payload = line.strip()
-            if detect_success(http_method, url, payload):
-                print(f"[!] Potential vulnerability found: {line.strip()}")
-                analyze_vulnerability(file, http_method, url)
-            else:
-                print(f"[+] Not vulnerable with payload: {line.strip()}")
+        for form in forms:
+            details = form_details(form)
+            for line in f:
+                payload = line.strip()
+                data = {}
+                for input_tag in details["inputs"]:
+                    if input_tag["type"] == "hidden" or input_tag["value"]:
+                        data[input_tag['name']] = input_tag["value"] + line
+                    elif input_tag["type"] != "submit":
+                        data[input_tag['name']] = f"test{line}"
+
+                action_url = details['action']
+                print(f"Submitting to {action_url} with data {data}")
+                if details["method"] == "POST":
+                    res = session.post(url, data=data)
+                elif details["method"] == "GET":
+                    print(f"url y data {url} {data}")
+                    res = session.get(url, params=data)
+                else:
+                    print(f"No method {details['method']}")
+                if vulnerable(res):
+                    print(f"[!] Potential vulnerability found: {line.strip()}")
+                    analyze_vulnerability(file, http_method, url)
+                else:
+                    print(f"[+] Not vulnerable with payload: {line.strip()}")
 
 
 if __name__ == "__main__":
