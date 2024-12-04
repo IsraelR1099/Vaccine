@@ -3,6 +3,7 @@ import argparse
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
+from colorama import Fore, Back, Style, init
 
 
 def make_request(url, method):
@@ -45,6 +46,7 @@ def get_fields(form):
             "value": input_value
         })
     form_data["inputs"] = inputs
+    print(f"inputs in form data: {inputs}")
     return form_data
 
 
@@ -54,85 +56,79 @@ def vulnerable(response):
         "Warning",
         "mysql_",
         "ORA-",
+        #MySql
         "You have an error in your SQL syntax",
+        #Microsoft SQL server
         "Unclosed quotation mark after the character string",
+        #Oracle
         "quoted string not properly terminated",
         "Fatal error",
         "unterminated string constant",
+        #PostgreSQL
         "syntax error",
         ]
-    print(f"Response is: {response.content.decode().lower()}")
     for msg in error_msgs:
-        if msg in response.content.decode().lower():
+        if msg.lower() in response.content.decode().lower():
             return True
     return False
 
 
+def exploit_vulnerability(http_method, url, data, vulnerable_field):
+    file = "syntax.txt"
+    print(f"method: {http_method}")
+    try:
+        with open(file, 'r') as file:
+            payloads = file.readlines()
+    except FileNotFoundError:
+        print(f"{Fore.RED}[-] Payload file not found: {file}{Style.RESET_ALL}")
+        return
+    for payload in payloads:
+        payload = payload.strip()
+        data[vulnerable_field] = payload
+        print(f"[*] Testing payload: {payload}")
+        if http_method == "post":
+            response = requests.post(url, data=data)
+        elif http_method == "get":
+            response = requests.get(url, params=data)
+        else:
+            continue
+        print(f"response is: {response.content.decode()}")
+
+
 def scan_url(url, method, output_file):
-    error_payloads = "syntax.txt"
     forms = extract_forms(url)
-    for form in forms:
-        action = form.get("action") or url
-        method = form.get("method", "GET").upper()
-        fields = get_fields(form)
-        print(f"Testing form with fields: {fields} and action: {action}")
-        with open(error_payloads, "r") as f:
-            for line in f:
-                payload = line.strip()
-                test_fields = fields.copy()
-
-                for field_name in test_fields:
-                    if field_name.lower() in ["submit", "button"]:
-                        continue
-                    test_fields[field_name] = payload
-                    print(f"Injecting payload: {payload} into field: {field_name}")
-                    full_url = action if action.startswith("http") else url + action
-                    if method.upper() == "GET":
-                        response = requests.get(full_url, params=test_fields)
-                    elif method.upper() == "POST":
-                        response = requests.post(url, data=test_fields)
-                    else:
-                        print("Unsupported method.")
-                        continue
-                    print(f"Sent {method} request to {full_url} with data: {test_fields}")
-                    if vulnerable(response):
-                        print(f"[!] Potential SQL Injection vulnerability found with payload: {payload}")
-                    else:
-                        print("[-] No SQL Injection vulnerability found.")
-
-
-def scan_url2(url, method, output_file):
-    forms = extract_forms(url)
-    print(f"Found {len(forms)} forms.")
     for form in forms:
         form_data = get_fields(form)
-        for i in "\"'":
-            data = {}
-            names = []
+        for i in ["'",'"']:
             for input_tag in form_data["inputs"]:
-                if input_tag["type"] == "hidden" or input_tag["value"]:
-                    try:
-                        data[input_tag["name"]] = input_tag["value"] + i
-                    except:
-                        pass
-                elif input_tag["type"] != "submit":
-                    if input_tag["name"] != "user_token":
-                        names.append(input_tag["name"])
+                if input_tag["type"] == "submit":
+                    continue
+                data = {}
+                for tag in form_data["inputs"]:
+                    if tag["type"] == "hidden" or tag["value"]:
+                        data[tag["name"]] = tag["value"]
+                    elif tag["type"] != "submit":
+                        data[tag["name"]] = "test"
+                if input_tag["name"]:
                     data[input_tag["name"]] = f"test{i}"
-            url = urljoin(url, form_data["action"])
-            if form_data["method"] == "post":
-                response = requests.post(url, data=data)
-            elif form_data["method"] == "get":
-                response = requests.get(url, params=data)
-            if vulnerable(response):
-                print(f"[+] SQL Injection vulnerability found: {url}")
-                print(f"[*] Form: {form_data}")
-                print(f"[*] Data: {data}")
-                break
-            else:
-                print(f"[-] No SQL Injection vulnerability found: {url}")
-                print(f"[*] Form: {form_data}")
-                print(f"[*] Data: {data}")
+                action_url = (
+                    urljoin(url, form_data["action"])
+                    if form_data["action"] and form_data["action"] != "#" else url
+                )
+                print(f"Testing with URL: {url}, Data: {data}")
+                if form_data["method"] == "post":
+                    response = requests.post(action_url, data=data)
+                elif form_data["method"] == "get":
+                    response = requests.get(action_url, params=data)
+                else:
+                    continue
+                if vulnerable(response):
+                    print(f"{Fore.GREEN}[+] SQL Injection vulnerability found: {url}{Style.RESET_ALL}")
+                    exploit_vulnerability(form_data["method"], action_url, data, input_tag["name"])
+                    break
+                else:
+                    print(f"{Fore.RED}[-] No SQL Injection vulnerability found: {url}{Style.RESET_ALL}")
+                    print(f"{Fore.BLUE}[*] Data: {data}{Style.RESET_ALL}")
 
 
 if __name__ == "__main__":
@@ -162,4 +158,5 @@ if __name__ == "__main__":
     output_file = args.output
     method = args.method
     url = args.url
-    scan_url2(url, method, output_file)
+    init(autoreset=True)
+    scan_url(url, method, output_file)
