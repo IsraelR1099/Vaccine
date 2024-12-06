@@ -3,7 +3,8 @@ import argparse
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
-from colorama import Fore, Back, Style, init
+from colorama import Fore, Style, init
+from test_mysql import test_mysql
 
 
 def make_request(url, method):
@@ -56,15 +57,15 @@ def vulnerable(response):
         "Warning",
         "mysql_",
         "ORA-",
-        #MySql
+        # MySql
         "You have an error in your SQL syntax",
-        #Microsoft SQL server
+        # Microsoft SQL server
         "Unclosed quotation mark after the character string",
-        #Oracle
+        # Oracle
         "quoted string not properly terminated",
         "Fatal error",
         "unterminated string constant",
-        #PostgreSQL
+        # PostgreSQL
         "syntax error",
         ]
     for msg in error_msgs:
@@ -76,6 +77,8 @@ def vulnerable(response):
 def exploit_vulnerability(http_method, url, data, vulnerable_field):
     file = "syntax.txt"
     print(f"method: {http_method}")
+    test_mysql(url, http_method, data, vulnerable_field)
+    sys.exit(1)
     try:
         with open(file, 'r') as file:
             payloads = file.readlines()
@@ -99,7 +102,7 @@ def scan_url(url, method, output_file):
     forms = extract_forms(url)
     for form in forms:
         form_data = get_fields(form)
-        for i in ["'",'"']:
+        for i in ["'", '"']:
             for input_tag in form_data["inputs"]:
                 if input_tag["type"] == "submit":
                     continue
