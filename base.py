@@ -74,10 +74,10 @@ def vulnerable(response):
     return False
 
 
-def exploit_vulnerability(http_method, url, data, vulnerable_field):
+def exploit_vulnerability(http_method, url, data, vulnerable_field, output_file):
     file = "syntax.txt"
     print(f"method: {http_method}")
-    test_mysql(url, http_method, data, vulnerable_field)
+    test_mysql(url, http_method, data, vulnerable_field, output_file)
     sys.exit(1)
     try:
         with open(file, 'r') as file:
@@ -127,7 +127,8 @@ def scan_url(url, method, output_file):
                     continue
                 if vulnerable(response):
                     print(f"{Fore.GREEN}[+] SQL Injection vulnerability found: {url}{Style.RESET_ALL}")
-                    exploit_vulnerability(form_data["method"], action_url, data, input_tag["name"])
+                    exploit_vulnerability(form_data["method"], action_url,
+                                          data, input_tag["name"], output_file)
                     break
                 else:
                     print(f"{Fore.RED}[-] No SQL Injection vulnerability found: {url}{Style.RESET_ALL}")
