@@ -1,9 +1,10 @@
 import requests
 from colorama import Fore, Style
-from utils import vulnerable
+from utils import vulnerable, write_to_file
+from test_mysql import test_mysql
 
 
-def error_based(form_data, url, http_method):
+def error_based(form_data, url, http_method, output_file):
     try:
         with open("exploit/generic_errorbased.txt", 'r') as file:
             lines = file.readlines()
@@ -34,9 +35,19 @@ def error_based(form_data, url, http_method):
             else:
                 continue
             if vulnerable(response):
-                print(f"{Fore.GREEN}[+]SQL Injection vulnerability found: {url}{Style.RESET_ALL}")
+                print(f"{Fore.GREEN}[+] {url} is vulnerable to Error-Based attacks")
+                write_to_file(
+                    output_file,
+                    f"[+] {url} - Error-Based SQLi vulnerability found"
+                )
+                test_mysql(action_url, form_data["method"], data, input_tag["name"], output_file)
                 return True
-            else:
-                print(f"{Fore.RED}[-]No SQL Injection vulnerability found: {url}{Style.RESET_ALL}")
+
+    print(f"{Fore.RED}[-] No SQL Injection vulnerability found: {url}{Style.RESET_ALL}")
+    write_to_file(
+        file,
+        f"[-] {url} - No SQLi vulnerabilities found using Error-Based SQLi"
+    )
+
     return False
 

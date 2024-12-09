@@ -6,7 +6,7 @@ from urllib.parse import urljoin
 from colorama import Fore, Style, init
 from test_mysql import test_mysql
 from error_based import error_based
-from utils import vulnerable
+from utils import vulnerable, write_to_file
 
 
 def make_request(url, method):
@@ -77,43 +77,21 @@ def exploit_vulnerability(http_method, url, data, vulnerable_field, output_file)
 
 
 def scan_url(url, method, output_file):
+    """
+    Scan a URL for vulnerabilities and exploit if found.
+    """
     forms = extract_forms(url)
+    if not forms:
+        print(f"{Fore.RED}[-] No forms found on the URL: {url}{Style.RESET_ALL}")
+        return
     for form in forms:
         form_data = get_fields(form)
-        if error_based(form_data, url, method):
+        if error_based(form_data, url, method, output_file):
             print(f"{Fore.GREEN}[+]{url} is vulnerable to Error-Based attacks{Style.RESET_ALL}")
-        sys.exit(0)
-        for i in ["'", '"']:
-            for input_tag in form_data["inputs"]:
-                if input_tag["type"] == "submit":
-                    continue
-                data = {}
-                for tag in form_data["inputs"]:
-                    if tag["type"] == "hidden" or tag["value"]:
-                        data[tag["name"]] = tag["value"]
-                    elif tag["type"] != "submit":
-                        data[tag["name"]] = "test"
-                if input_tag["name"]:
-                    data[input_tag["name"]] = f"test{i}"
-                action_url = (
-                    urljoin(url, form_data["action"])
-                    if form_data["action"] and form_data["action"] != "#" else url
-                )
-                print(f"Testing with URL: {url}, Data: {data}")
-                if form_data["method"] == "post":
-                    response = requests.post(action_url, data=data)
-                elif form_data["method"] == "get":
-                    response = requests.get(action_url, params=data)
-                else:
-                    continue
-                if vulnerable(response):
-                    print(f"{Fore.GREEN}[+] SQL Injection vulnerability found: {url}{Style.RESET_ALL}")
-                    exploit_vulnerability(form_data["method"], action_url,
-                                          data, input_tag["name"], output_file)
-                    break
-                else:
-                    print(f"{Fore.RED}[-] No SQL Injection vulnerability found: {url}{Style.RESET_ALL}")
-                    print(f"{Fore.BLUE}[*] Data: {data}{Style.RESET_ALL}")
+            write_to_file(
+                output_file,
+                f"[+] {url} - Error-Based SQLi vulnerability found"
+            )
 
 
 if __name__ == "__main__":

@@ -19,3 +19,11 @@ def vulnerable(response):
         if msg.lower() in response.content.decode().lower():
             return True
     return False
+
+
+def write_to_file(filename, content):
+    try:
+        with open(filename, "a") as file:
+            file.write(content + "\n")
+    except OSError as e:
+        print({f"[-] Error writing on file: {filename}"})
