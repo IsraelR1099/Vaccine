@@ -2,11 +2,10 @@ import sys
 import argparse
 import requests
 from bs4 import BeautifulSoup
-from urllib.parse import urljoin
 from colorama import Fore, Style, init
 from test_mysql import test_mysql
 from error_based import error_based
-from utils import vulnerable, write_to_file
+from boolean_based import boolean_based
 
 
 def make_request(url, method):
@@ -87,11 +86,9 @@ def scan_url(url, method, output_file):
     for form in forms:
         form_data = get_fields(form)
         if error_based(form_data, url, method, output_file):
-            print(f"{Fore.GREEN}[+]{url} is vulnerable to Error-Based attacks{Style.RESET_ALL}")
-            write_to_file(
-                output_file,
-                f"[+] {url} - Error-Based SQLi vulnerability found"
-            )
+            print(f"{Fore.GREEN}[+] {url} is vulnerable to Error-Based attacks{Style.RESET_ALL}")
+        if boolean_based(form_data, url, method, output_file):
+            print(f"{Fore.GREEN}[+] {url} is vulnerable to Boolean-Based attacks{Style.RESET_ALL}")
 
 
 if __name__ == "__main__":

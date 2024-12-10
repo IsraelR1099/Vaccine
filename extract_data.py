@@ -9,6 +9,7 @@ def get_fields(response):
 
 
 def extract_data(response, file, payload, vulnerable_field):
+    file_name = file
     with open(file, "+a") as file:
         file.seek(0)
         fields = get_fields(response)
@@ -35,4 +36,4 @@ def extract_data(response, file, payload, vulnerable_field):
                     file.write(found + '\n')
                     written_values.add(found)
                 else:
-                    print(f"{Fore.YELLOW}Data already written to file: {file}{Style.RESET_ALL}")
+                    print(f"{Fore.YELLOW}Data already written to file: {file_name}{Style.RESET_ALL}")
