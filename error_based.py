@@ -6,14 +6,7 @@ from test_mysql import test_mysql
 from urllib.parse import urljoin
 
 
-def error_based(form_data, url, http_method, output_file):
-    try:
-        with open("exploit/generic_errorbased.txt", 'r') as file:
-            lines = file.readlines()
-    except FileNotFoundError:
-        print(f"{Fore.RED}[-] Error-Based SQL Injection file not found{Style.RESET_ALL}")
-        sys.exit(1)
-    print(f"{Fore.LIGHTYELLOW_EX}[*] Testing Error-Based SQL Injection...{Style.RESET_ALL}")
+def iter_lines(lines, form_data, url, method, file):
     for line in lines:
         for input_tag in form_data["inputs"]:
             if input_tag["type"] == "submit":
@@ -39,10 +32,10 @@ def error_based(form_data, url, http_method, output_file):
             if vulnerable(response):
                 print(f"{Fore.GREEN}[+] {url} is vulnerable to Error-Based attacks")
                 write_to_file(
-                    output_file,
+                    file,
                     f"[+] {url} - Error-Based SQLi vulnerability found"
                 )
-                test_mysql(action_url, form_data["method"], data, input_tag["name"], output_file)
+                test_mysql(action_url, form_data["method"], data, input_tag["name"], file)
                 return True
 
     print(f"{Fore.RED}[-] No SQL Injection vulnerability found: {url}{Style.RESET_ALL}")
@@ -50,5 +43,25 @@ def error_based(form_data, url, http_method, output_file):
         file,
         f"[-] {url} - No SQLi vulnerabilities found using Error-Based SQLi"
     )
+    return True
 
+
+def error_based(form_data, url, http_method, output_file, database_type="mysql"):
+    payload_files = {
+        "mysql": "exploit/generic_errorbased.txt",
+        "oracle": "exploit/oracle_errorbased.txt",
+        "mssql": "exploit/mssql_errorbased.txt"
+    }
+    if database_type not in payload_files:
+        print(f"{Fore.RED}[-] Unsupported database type: {database_type}{Style.RESET_ALL}")
+        sys.exit(1)
+    try:
+        with open(payload_files[database_type], 'r') as file:
+            lines = file.readlines()
+    except FileNotFoundError:
+        print(f"{Fore.RED}[-] Error-Based SQL Injection file not found{Style.RESET_ALL}")
+        sys.exit(1)
+    print(f"{Fore.LIGHTYELLOW_EX}[*] Testing Error-Based SQL Injection...{Style.RESET_ALL}")
+    if iter_lines(lines, form_data, url, http_method, output_file):
+        return True
     return False
