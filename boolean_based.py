@@ -4,10 +4,25 @@ from urllib.parse import urljoin
 from utils import write_to_file
 
 
+def send_request(url, data, method):
+    """
+    Helper function to send HTTP requests.
+    """
+    try:
+        if method.lower() == "post":
+            return requests.post(url, data=data)
+        elif method.lower() == "get":
+            return requests.get(url, params=data)
+    except requests.RequestException as e:
+        print(f"{Fore.RED}[!] Error during request: {e}{Style.RESET_ALL}")
+    return None
+
+
 def test_response(data, form_data, url, method, payload, false_payload, input_tag):
     """
     This function is used to test the response of the server.
     """
+    vulnerable = False
     if input_tag["name"]:
         data[input_tag["name"]] = f"1{payload}"
     action_url = (
@@ -23,18 +38,15 @@ def test_response(data, form_data, url, method, payload, false_payload, input_ta
         return
     if input_tag["name"]:
         data[input_tag["name"]] = f"1{false_payload}"
-    action_url = (
-        urljoin(url, form_data["action"])
-        if form_data["action"] and form_data["action"] != "#"
-        else url
-    )
     if form_data["method"] == "post":
         false_response = requests.post(action_url, data=data)
     elif form_data["method"] == "get":
         false_response = requests.get(action_url, params=data)
     else:
         return
-    return response.text != false_response.text
+    if response.text != false_response.text:
+        vulnerable = True
+    return vulnerable
 
 
 def boolean_based(form_data, url, method, output_file):
@@ -70,5 +82,6 @@ def boolean_based(form_data, url, method, output_file):
                     output_file,
                     f"[+] {url} - Boolean-based SQLi vulnerability found"
                 )
+                return True
             else:
                 print(f"{Fore.LIGHTRED_EX}[-] The parameter {input_tag['name']} is not vulnerable to boolean based SQL injection.{Style.RESET_ALL}")
