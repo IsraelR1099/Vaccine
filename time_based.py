@@ -1,11 +1,11 @@
 import requests
+import time
 from colorama import Style, Fore
 from urllib.parse import urljoin
+from utils import write_to_file
 
 
 def send_request(url, data, method):
-    print(f"url: {url}")
-    print(f"data time based:: {data}")
     try:
         if method.lower() == "post":
             return requests.post(url, data=data)
@@ -24,22 +24,39 @@ def time_based(form_data, url, method, output_file):
         print(f"{Fore.RED}[-] Time-Based SQL Injection file not found{Style.RESET_ALL}")
         return
     print(f"{Fore.LIGHTYELLOW_EX}[*] Testing Time-Based SQL Injection...{Style.RESET_ALL}")
+    write_to_file(
+        output_file,
+        f"[*] Testing Time-Based SQL Injection..."
+    )
     for payload in payloads:
         for input_tag in form_data["inputs"]:
             if input_tag["type"] == "submit":
                 continue
-        data = {}
-        for tag in form_data["inputs"]:
-            if tag["type"] == "hidden" or tag["value"]:
-                data[tag["name"]] = tag["value"]
-            elif tag["type"] != "submit":
-                data[tag["name"]] = "test"
-        if input_tag["name"]:
-            data[input_tag["name"]] = f"test{payload}"
-        action_url = (
-            urljoin(url, form_data["action"])
-            if form_data["action"] and form_data["action"] != "#" else url
-        )
-        print(f"payload: {payload}")
-        response = send_request(url, data, method)
-        # print(f"response: {response.content}")
+            data = {}
+            for tag in form_data["inputs"]:
+                if tag["type"] == "hidden" or tag["value"]:
+                    data[tag["name"]] = tag["value"]
+                elif tag["type"] != "submit":
+                    data[tag["name"]] = "test1"
+            if input_tag["name"]:
+                data[input_tag["name"]] = payload.strip()
+            action_url = (
+                urljoin(url, form_data["action"])
+                if form_data["action"] and form_data["action"] != "#" else url
+            )
+            start_time = time.time()
+            response = send_request(action_url, data, method)
+            end_time = time.time()
+            elapsed_time = end_time - start_time
+            print(f"{Fore.CYAN}[*] Response time: {elapsed_time} seconds{Style.RESET_ALL}")
+            if elapsed_time >= 3:
+                print(f"{Fore.GREEN}[+] Vulnerable to Time-Based SQL Injection{Style.RESET_ALL}")
+                print(f'{Fore.LIGHTBLUE_EX}[*] Vulnerable field: {input_tag["name"]}')
+                write_to_file(
+                    output_file,
+                    f"[+] Vulnerable to Time-Based SQL Injection"
+                )
+                return True
+
+    print(f"{Fore.RED}[-] No SQL Injection vulnerability found: {url}{Style.RESET_ALL}")
+    return False
