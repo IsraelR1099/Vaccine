@@ -6,6 +6,7 @@ from colorama import Fore, Style, init
 from test_mysql import test_mysql
 from error_based import error_based
 from boolean_based import boolean_based
+from time_based import time_based
 
 
 def make_request(url, method):
@@ -89,6 +90,8 @@ def scan_url(url, method, output_file):
             print(f"{Fore.GREEN}[+] {url} is vulnerable to Error-Based attacks{Style.RESET_ALL}")
         if boolean_based(form_data, url, method, output_file):
             print(f"{Fore.GREEN}[+] {url} is vulnerable to Boolean-Based attacks{Style.RESET_ALL}")
+        if time_based(form_data, url, method, output_file):
+            print(f"{Fore.GREEN}[+] {url} is vulnerable to Time-Based attack{Style.RESET_ALL}")
 
 
 if __name__ == "__main__":
