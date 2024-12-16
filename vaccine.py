@@ -9,15 +9,6 @@ from boolean_based import boolean_based
 from time_based import time_based
 
 
-def make_request(url, method):
-    response = None
-    if method == "GET":
-        response = requests.get(url)
-    elif method == "POST":
-        response = requests.post(url)
-    return response
-
-
 def extract_forms(url):
     try:
         response = requests.get(url)
@@ -50,30 +41,6 @@ def get_fields(form):
         })
     form_data["inputs"] = inputs
     return form_data
-
-
-def exploit_vulnerability(http_method, url, data, vulnerable_field, output_file):
-    file = "syntax.txt"
-    print(f"method: {http_method}")
-    test_mysql(url, http_method, data, vulnerable_field, output_file)
-    sys.exit(1)
-    try:
-        with open(file, 'r') as file:
-            payloads = file.readlines()
-    except FileNotFoundError:
-        print(f"{Fore.RED}[-] Payload file not found: {file}{Style.RESET_ALL}")
-        return
-    for payload in payloads:
-        payload = payload.strip()
-        data[vulnerable_field] = payload
-        print(f"[*] Testing payload: {payload}")
-        if http_method == "post":
-            response = requests.post(url, data=data)
-        elif http_method == "get":
-            response = requests.get(url, params=data)
-        else:
-            continue
-        print(f"response is: {response.content.decode()}")
 
 
 def scan_url(url, method, output_file):

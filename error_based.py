@@ -23,9 +23,9 @@ def iter_lines(lines, form_data, url, method, file):
                 urljoin(url, form_data["action"])
                 if form_data["action"] and form_data["action"] != "#" else url
             )
-            if form_data["method"] == "post":
+            if method.lower() == "post":
                 response = requests.post(action_url, data=data)
-            elif form_data["method"] == "get":
+            elif method.lower() == "get":
                 response = requests.get(action_url, params=data)
             else:
                 continue
@@ -43,7 +43,7 @@ def iter_lines(lines, form_data, url, method, file):
         file,
         f"[-] {url} - No SQLi vulnerabilities found using Error-Based SQLi"
     )
-    return True
+    return False
 
 
 def error_based(form_data, url, http_method, output_file, database_type="mysql"):
@@ -61,7 +61,7 @@ def error_based(form_data, url, http_method, output_file, database_type="mysql")
     except FileNotFoundError:
         print(f"{Fore.RED}[-] Error-Based SQL Injection file not found{Style.RESET_ALL}")
         sys.exit(1)
-    print(f"{Fore.LIGHTYELLOW_EX}[*] Testing Error-Based SQL Injection...{Style.RESET_ALL}")
+    print(f"{Fore.LIGHTYELLOW_EX}[*] Testing Error-Based SQL Injection on {database_type} database...{Style.RESET_ALL}")
     if iter_lines(lines, form_data, url, http_method, output_file):
         return True
     return False

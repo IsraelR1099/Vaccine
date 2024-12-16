@@ -1,4 +1,6 @@
 def vulnerable(response):
+    if response is None:
+        return False
     error_msgs = [
         "SQL syntax",
         "Warning",

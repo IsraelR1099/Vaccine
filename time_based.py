@@ -11,6 +11,9 @@ def send_request(url, data, method):
             return requests.post(url, data=data)
         elif method.lower() == "get":
             return requests.get(url, params=data)
+        else:
+            print(f"{Fore.RED}[!] {method} is not allowed{Style.RESET_ALL}")
+            return None
     except requests.RequestException as e:
         print(f"{Fore.RED}[!] Error during request: {e}{Style.RESET_ALL}")
         return None
@@ -46,6 +49,8 @@ def time_based(form_data, url, method, output_file):
             )
             start_time = time.time()
             response = send_request(action_url, data, method)
+            if response is None:
+                return False
             end_time = time.time()
             elapsed_time = end_time - start_time
             print(f"{Fore.CYAN}[*] Response time: {elapsed_time} seconds{Style.RESET_ALL}")
@@ -58,5 +63,9 @@ def time_based(form_data, url, method, output_file):
                 )
                 return True
 
+    write_to_file(
+        output_file,
+        f"[-] No SQLi vulnerabilities found using Time-Based SQLi"
+    )
     print(f"{Fore.RED}[-] No SQL Injection vulnerability found: {url}{Style.RESET_ALL}")
     return False
