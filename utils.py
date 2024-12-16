@@ -16,6 +16,7 @@ def vulnerable(response):
         "unterminated string constant",
         # PostgreSQL
         "syntax error",
+        "unterminated quoted string at or near"
         ]
     for msg in error_msgs:
         if msg.lower() in response.content.decode().lower():

