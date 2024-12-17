@@ -4,9 +4,11 @@ from colorama import Fore, Style
 from utils import vulnerable, write_to_file
 from test_mysql import test_mysql
 from urllib.parse import urljoin
+from test_postgresql import test_postgresql
 
 
 def iter_lines(lines, form_data, url, method, file, db):
+    print(f"lines: {lines}")
     for line in lines:
         for input_tag in form_data["inputs"]:
             if input_tag["type"] == "submit":
@@ -18,11 +20,12 @@ def iter_lines(lines, form_data, url, method, file, db):
                 elif tag["type"] != "submit":
                     data[tag["name"]] = "test"
             if input_tag["name"]:
-                data[input_tag["name"]] = f"test{line}"
+                data[input_tag["name"]] = f"test{line.strip()}"
             action_url = (
                 urljoin(url, form_data["action"])
                 if form_data["action"] and form_data["action"] != "#" else url
             )
+            print(f"{Fore.LIGHTYELLOW_EX}[*] Testing {action_url} with data: {data}{Style.RESET_ALL}")
             if method.lower() == "post":
                 response = requests.post(action_url, data=data)
             elif method.lower() == "get":
@@ -36,7 +39,10 @@ def iter_lines(lines, form_data, url, method, file, db):
                     file,
                     f"[+] {url} - Error-Based SQLi vulnerability found"
                 )
-                test_mysql(action_url, form_data["method"], data, input_tag["name"], file, db)
+                if db == "mysql":
+                    test_mysql(action_url, form_data["method"], data, input_tag["name"], file)
+                elif db == "postgresql":
+                    test_postgresql(action_url, form_data["method"], data, input_tag["name"], file)
                 return True
 
     print(f"{Fore.RED}[-] No SQL Injection vulnerability found: {url}{Style.RESET_ALL}")

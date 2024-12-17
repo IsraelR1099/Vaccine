@@ -53,7 +53,7 @@ def scan_url(url, method, output_file):
         return
     for form in forms:
         form_data = get_fields(form)
-        if error_based(form_data, url, method, output_file, "postgresql"):
+        if error_based(form_data, url, method, output_file, "mysql"):
             print(f"{Fore.GREEN}[+] {url} is vulnerable to Error-Based attacks{Style.RESET_ALL}")
         if boolean_based(form_data, url, method, output_file):
             print(f"{Fore.GREEN}[+] {url} is vulnerable to Boolean-Based attacks{Style.RESET_ALL}")

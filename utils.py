@@ -15,7 +15,7 @@ def vulnerable(response):
         "Fatal error",
         "unterminated string constant",
         # PostgreSQL
-        "syntax error",
+        "syntax error at or near",
         "unterminated quoted string at or near"
         ]
     for msg in error_msgs:
@@ -30,3 +30,25 @@ def write_to_file(filename, content):
             file.write(content + "\n")
     except OSError as e:
         print({f"[-] Error writing on file: {filename}"})
+
+
+def check_response(response):
+    """
+    Check data from the response to check for vulnerabilities
+    """
+    error_msgs = [
+        "You have an error in your SQL syntax",
+        "Warning: mysql_fetch_array()",
+        "Warning: mysql_fetch_assoc()",
+        "The used SELECT statements have a different number of columns",
+        "Unknown column",
+        "SQL syntax",
+        "each UNION query must have the same number of columns"
+        ]
+    response_text = response.content.decode().lower()
+    print(f"response text: {response_text}")
+    for error_msg in error_msgs:
+        if error_msg.lower() in response_text:
+            return False
+
+    return True
