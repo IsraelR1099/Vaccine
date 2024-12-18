@@ -32,7 +32,6 @@ def iter_lines(lines, form_data, url, method, file, db):
                 response = requests.get(action_url, params=data)
             else:
                 continue
-            print(f"response is: {response.text}")
             if vulnerable(response):
                 print(f"{Fore.GREEN}[+] {url} is vulnerable to Error-Based attacks")
                 write_to_file(

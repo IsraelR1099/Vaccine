@@ -67,5 +67,5 @@ def time_based(form_data, url, method, output_file):
         output_file,
         f"[-] No SQLi vulnerabilities found using Time-Based SQLi"
     )
-    print(f"{Fore.RED}[-] No SQL Injection vulnerability found: {url}{Style.RESET_ALL}")
+    print(f"{Fore.RED}[-] No SQLi vulnerability found using Time-Based: {url}{Style.RESET_ALL}")
     return False

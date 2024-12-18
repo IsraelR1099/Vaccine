@@ -46,7 +46,6 @@ def check_response(response):
         "each UNION query must have the same number of columns"
         ]
     response_text = response.content.decode().lower()
-    print(f"response text: {response_text}")
     for error_msg in error_msgs:
         if error_msg.lower() in response_text:
             return False

