@@ -3,7 +3,6 @@ import argparse
 import requests
 from bs4 import BeautifulSoup
 from colorama import Fore, Style, init
-from test_mysql import test_mysql
 from error_based import error_based
 from boolean_based import boolean_based
 from time_based import time_based
@@ -43,7 +42,7 @@ def get_fields(form):
     return form_data
 
 
-def scan_url(url, method, output_file):
+def scan_url(url, method, output_file, database):
     """
     Scan a URL for vulnerabilities and exploit if found.
     """
@@ -53,7 +52,7 @@ def scan_url(url, method, output_file):
         return
     for form in forms:
         form_data = get_fields(form)
-        if error_based(form_data, url, method, output_file, "postgresql"):
+        if error_based(form_data, url, method, output_file, database):
             print(f"{Fore.GREEN}[+] {url} is vulnerable to Error-Based attacks{Style.RESET_ALL}")
         if boolean_based(form_data, url, method, output_file):
             print(f"{Fore.GREEN}[+] {url} is vulnerable to Boolean-Based attacks{Style.RESET_ALL}")
@@ -82,11 +81,16 @@ if __name__ == "__main__":
             help="Request method",
             default="GET")
     parser.add_argument(
+        "-d", "--database",
+        help="Database type",
+        default="mysql")
+    parser.add_argument(
             "url",
             help="Target URL")
     args = parser.parse_args()
     output_file = args.output
     method = args.method
+    database = args.database
     url = args.url
     init(autoreset=True)
-    scan_url(url, method, output_file)
+    scan_url(url, method, output_file, database.lower())

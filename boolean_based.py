@@ -96,5 +96,5 @@ def boolean_based(form_data, url, method, output_file):
         output_file,
         f"[-] No SQLi vulnerabilities found using Boolean-Based SQLi"
     )
-    print(f"{Fore.LIGHTRED_EX} [-] No SQLi vulnerabilities found using Boolean-Based SQLi")
+    print(f"{Fore.LIGHTRED_EX}[-] No SQLi vulnerabilities found using Boolean-Based SQLi")
     return False

