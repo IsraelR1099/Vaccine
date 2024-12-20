@@ -5,12 +5,12 @@ from urllib.parse import urljoin
 from utils import write_to_file
 
 
-def send_request(url, data, method):
+def send_request(url, data, method, user_agent):
     try:
         if method.lower() == "post":
-            return requests.post(url, data=data)
+            return requests.post(url, data=data, headers=user_agent)
         elif method.lower() == "get":
-            return requests.get(url, params=data)
+            return requests.get(url, params=data, headers=user_agent)
         else:
             print(f"{Fore.RED}[!] {method} is not allowed{Style.RESET_ALL}")
             return None
@@ -19,7 +19,7 @@ def send_request(url, data, method):
         return None
 
 
-def time_based(form_data, url, method, output_file):
+def time_based(form_data, url, method, user_agent, output_file):
     try:
         with open("exploit/time_based_payload.txt", 'r') as file:
             payloads = file.readlines()
@@ -48,7 +48,8 @@ def time_based(form_data, url, method, output_file):
                 if form_data["action"] and form_data["action"] != "#" else url
             )
             start_time = time.time()
-            response = send_request(action_url, data, method)
+            response = send_request(action_url, data,
+                                    method, user_agent)
             if response is None:
                 return False
             end_time = time.time()
